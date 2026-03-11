@@ -11,11 +11,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create roles
+        // Rollen aanmaken
         $adminRole  = Role::create(['name' => 'admin']);
         $playerRole = Role::create(['name' => 'player']);
 
-        // Admin account
+        // Beheerder account
         User::factory()->create([
             'username' => 'Admin',
             'email'    => 'admin@dreamscape.test',
@@ -23,18 +23,21 @@ class DatabaseSeeder extends Seeder
             'role_id'  => $adminRole->id,
         ]);
 
-        // Test player account
+        // Test speler account
         User::factory()->create([
-            'username' => 'TestPlayer',
+            'username' => 'TestSpeler',
             'email'    => 'player@dreamscape.test',
             'password' => Hash::make('password'),
             'role_id'  => $playerRole->id,
         ]);
 
-        // Extra random players
+        // Extra willekeurige spelers
         User::factory(8)->create(['role_id' => $playerRole->id]);
 
-        // Seed items
+        // Voorwerpen aanmaken
         $this->call(ItemSeeder::class);
+
+        // Inventaris vullen voor spelers en beheerder
+        $this->call(InventorySeeder::class);
     }
 }
