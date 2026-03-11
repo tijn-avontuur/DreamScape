@@ -71,33 +71,32 @@
             </div>
         </div>
 
-        {{-- Quick Actions + Recent activity --}}
+        {{-- US22: Notificaties + Inkomende verzoeken --}}
         <div class="grid gap-4 lg:grid-cols-2">
-            {{-- Quick Actions --}}
+            {{-- Recente notificaties --}}
             <div class="rounded-xl border border-purple-900/40 bg-[#1a1035] p-6">
-                <h2 class="font-display text-sm font-semibold uppercase tracking-widest text-amber-400 mb-4">Snelle Acties</h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <a href="{{ route('items.index') }}" wire:navigate
-                       class="flex flex-col items-center gap-2 rounded-lg border border-purple-800/40 bg-purple-900/20 p-4 text-center transition hover:border-amber-500/40 hover:bg-amber-500/5">
-                        <flux:icon.book-open class="size-6 text-amber-400" />
-                        <span class="text-xs font-medium text-purple-200">Catalogus Bekijken</span>
-                    </a>
-                    <a href="{{ route('inventory.index') }}" wire:navigate
-                       class="flex flex-col items-center gap-2 rounded-lg border border-purple-800/40 bg-purple-900/20 p-4 text-center transition hover:border-teal-500/40 hover:bg-teal-500/5">
-                        <flux:icon.archive-box class="size-6 text-teal-400" />
-                        <span class="text-xs font-medium text-purple-200">Mijn Inventaris</span>
-                    </a>
-                    <a href="{{ route('trades.index') }}" wire:navigate
-                       class="flex flex-col items-center gap-2 rounded-lg border border-purple-800/40 bg-purple-900/20 p-4 text-center transition hover:border-blue-500/40 hover:bg-blue-500/5">
-                        <flux:icon.arrows-right-left class="size-6 text-blue-400" />
-                        <span class="text-xs font-medium text-purple-200">Ruilpost</span>
-                    </a>
-                    <a href="{{ route('profile.edit') }}" wire:navigate
-                       class="flex flex-col items-center gap-2 rounded-lg border border-purple-800/40 bg-purple-900/20 p-4 text-center transition hover:border-purple-500/40 hover:bg-purple-500/5">
-                        <flux:icon.user class="size-6 text-purple-400" />
-                        <span class="text-xs font-medium text-purple-200">Mijn Profiel</span>
-                    </a>
-                </div>
+                <h2 class="font-display text-sm font-semibold uppercase tracking-widest text-amber-400 mb-4">Recente Meldingen</h2>
+                @php
+                    $notifications = auth()->user()->gameNotifications()->latest()->take(5)->get();
+                @endphp
+                @if($notifications->isEmpty())
+                    <div class="flex flex-col items-center justify-center py-8 text-center">
+                        <flux:icon.bell class="size-8 text-purple-700 mb-2" />
+                        <p class="text-sm text-purple-500">Geen meldingen.</p>
+                    </div>
+                @else
+                    <div class="space-y-2">
+                        @foreach($notifications as $notification)
+                            <div class="flex items-start gap-3 rounded-lg px-3 py-2 {{ $notification->is_read ? 'opacity-50' : 'border border-blue-800/30 bg-blue-900/10' }}">
+                                <flux:icon.bell class="mt-0.5 size-4 shrink-0 text-blue-400" />
+                                <div>
+                                    <p class="text-sm text-purple-200">{{ $notification->message }}</p>
+                                    <p class="text-xs text-purple-600 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- Incoming Trade Requests --}}

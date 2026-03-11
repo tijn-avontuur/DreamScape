@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ItemCatalogController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TradeController;
 use App\Models\Item;
 use App\Models\Inventory;
 use Illuminate\Support\Facades\Auth;
@@ -29,8 +30,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Inventory (US15, US16, US17)
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
 
-    // Trades (player)
-    Route::view('trades', 'pages.trades.index')->name('trades.index');
+    // Trades (US18-22)
+    Route::get('trades', [TradeController::class, 'index'])->name('trades.index');
+    Route::get('trades/create', [TradeController::class, 'create'])->name('trades.create');
+    Route::post('trades', [TradeController::class, 'store'])->name('trades.store');
+    Route::patch('trades/{trade}/accept', [TradeController::class, 'accept'])->name('trades.accept');
+    Route::patch('trades/{trade}/reject', [TradeController::class, 'reject'])->name('trades.reject');
 
     // Admin routes
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
