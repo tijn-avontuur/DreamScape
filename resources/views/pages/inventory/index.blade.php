@@ -7,10 +7,59 @@
             <span class="text-sm text-purple-400">{{ $entries->count() }} {{ $entries->count() === 1 ? 'item' : 'items' }}</span>
         </div>
 
+        {{-- Filter & sort controls (US16, US17) --}}
+        <form method="GET" action="{{ route('inventory.index') }}" x-data="{ selectedType: @js($type) }" class="flex flex-col gap-4">
+            <input type="hidden" name="type" x-model="selectedType" />
+
+            {{-- US17: Type filter --}}
+            <div class="flex flex-wrap gap-2">
+                @php
+                    $typeOptions = ['' => 'Alle types', 'weapon' => 'Wapens', 'armor' => 'Uitrusting', 'accessory' => 'Accessoires', 'consumable' => 'Verbruiksartikelen', 'other' => 'Overig'];
+                @endphp
+                @foreach($typeOptions as $value => $label)
+                    <button
+                        type="button"
+                        x-on:click="selectedType = '{{ $value }}'; $nextTick(() => $el.closest('form').submit())"
+                        :class="selectedType === '{{ $value }}'
+                            ? 'bg-purple-700 border-purple-500 text-white'
+                            : 'bg-[#1a1035] border-purple-900/40 text-purple-400 hover:border-purple-600 hover:text-purple-200'"
+                        class="rounded-lg border px-4 py-1.5 text-sm font-medium transition">
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
+
+            {{-- US16: Sortering --}}
+            <div class="flex items-center gap-3">
+                <label class="text-xs uppercase tracking-widest text-purple-500">Sorteren op</label>
+                <select
+                    name="sort"
+                    x-on:change="$el.form.submit()"
+                    class="rounded-lg border border-purple-900/40 bg-[#1a1035] px-3 py-1.5 text-sm text-purple-300 focus:border-purple-500 focus:outline-none">
+                    <option value=""       {{ $sortBy === '' ? 'selected' : '' }}>Standaard</option>
+                    <option value="strength" {{ $sortBy === 'strength' ? 'selected' : '' }}>Kracht (hoog → laag)</option>
+                    <option value="rarity"   {{ $sortBy === 'rarity'   ? 'selected' : '' }}>Zeldzaamheid (hoog → laag)</option>
+                </select>
+
+                @if($type || $sortBy)
+                    <a href="{{ route('inventory.index') }}"
+                       class="rounded-lg border border-red-900/40 bg-red-900/20 px-3 py-1.5 text-sm text-red-400 hover:bg-red-900/40 hover:text-red-300 transition">
+                        Wis filters
+                    </a>
+                @endif
+            </div>
+        </form>
+
         @if($entries->isEmpty())
             <div class="rounded-xl border border-purple-900/40 bg-[#1a1035] p-12 text-center">
                 <flux:icon.archive-box class="mx-auto mb-3 size-12 opacity-30 text-purple-400" />
-                <p class="text-purple-400">Je inventaris is leeg.</p>
+                <p class="text-purple-400">
+                    @if($type)
+                        Geen items van dit type in je inventaris.
+                    @else
+                        Je inventaris is leeg.
+                    @endif
+                </p>
                 <a href="{{ route('items.index') }}" class="mt-4 inline-block rounded-lg border border-purple-700 bg-purple-900/30 px-4 py-2 text-sm text-purple-300 hover:bg-purple-700 hover:text-white transition">
                     Bekijk de catalogus
                 </a>

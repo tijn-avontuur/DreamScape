@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Admin\ItemController as AdminItemController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\ItemCatalogController;
+use App\Http\Controllers\ProfileController;
 use App\Models\Item;
 use App\Models\Inventory;
 use Illuminate\Support\Facades\Auth;
@@ -12,20 +15,19 @@ Route::view('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
-    // Item catalog (US10)
-    Route::get('items', fn () => view('pages.items.index', [
-        'items' => Item::orderBy('type')->orderBy('name')->get(),
-    ]))->name('items.index');
+    // Profiel bekijken (US3)
+    Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+
+    // Item catalog (US10, US12, US13, US14)
+    Route::get('items', [ItemCatalogController::class, 'index'])->name('items.index');
 
     // Item detail (US11)
     Route::get('items/{item}', fn (Item $item) => view('pages.items.show', [
         'item' => $item,
     ]))->name('items.show');
 
-    // Inventory (US15)
-    Route::get('inventory', fn () => view('pages.inventory.index', [
-        'entries' => Inventory::with('item')->where('user_id', Auth::id())->get(),
-    ]))->name('inventory.index');
+    // Inventory (US15, US16, US17)
+    Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
 
     // Trades (player)
     Route::view('trades', 'pages.trades.index')->name('trades.index');
