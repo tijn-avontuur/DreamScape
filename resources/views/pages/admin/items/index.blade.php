@@ -28,6 +28,7 @@
                         <th class="px-4 py-3 text-center">Kracht</th>
                         <th class="px-4 py-3 text-center">Snelheid</th>
                         <th class="px-4 py-3 text-center">Duurzaamheid</th>
+                        <th class="px-4 py-3 text-center">Bezitters</th>
                         <th class="px-4 py-3 text-center">Acties</th>
                     </tr>
                 </thead>
@@ -47,11 +48,21 @@
                             <td class="px-4 py-3 text-center text-red-400 font-bold">{{ $item->strength }}</td>
                             <td class="px-4 py-3 text-center text-blue-400 font-bold">{{ $item->speed }}</td>
                             <td class="px-4 py-3 text-center text-green-400 font-bold">{{ $item->durability }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="inline-flex items-center gap-1 text-purple-300 text-sm font-semibold">
+                                    <flux:icon.users class="size-3.5 text-purple-500" />
+                                    {{ $item->user_items_count }}
+                                </span>
+                            </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="{{ route('admin.items.edit', $item) }}"
                                        class="rounded px-3 py-1 text-xs border border-purple-700 text-purple-300 hover:bg-purple-700 hover:text-white transition">
                                         Bewerken
+                                    </a>
+                                    <a href="{{ route('admin.items.assign.show', $item) }}"
+                                       class="rounded px-3 py-1 text-xs border border-teal-800 text-teal-400 hover:bg-teal-800 hover:text-white transition">
+                                        Toekennen
                                     </a>
                                     <form method="POST" action="{{ route('admin.items.destroy', $item) }}"
                                           onsubmit="return confirm('Weet je zeker dat je \'{{ addslashes($item->name) }}\' wilt verwijderen?')">

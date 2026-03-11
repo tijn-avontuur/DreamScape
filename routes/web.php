@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ItemController as AdminItemController;
+use App\Http\Controllers\Admin\StatsController as AdminStatsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ItemCatalogController;
@@ -41,12 +42,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
         // US24 – Items CRUD
         Route::resource('items', AdminItemController::class)->only(['index','create','store','edit','update','destroy']);
+        // US25 – Item toekennen
+        Route::get('items/{item}/assign', [AdminItemController::class, 'showAssign'])->name('items.assign.show');
+        Route::post('items/{item}/assign', [AdminItemController::class, 'assign'])->name('items.assign');
         // US23 – Gebruikers aanmaken
         Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
         Route::post('users', [AdminUserController::class, 'store'])->name('users.store');
         Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 
-        Route::view('stats', 'pages.admin.stats')->name('stats');
+        // US25 – Statistieken
+        Route::get('stats', [AdminStatsController::class, 'index'])->name('stats');
     });
 });
 

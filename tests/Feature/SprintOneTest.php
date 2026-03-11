@@ -40,6 +40,18 @@ test('US2: registratie mislukt bij te kort wachtwoord', function () {
     ])->assertSessionHasErrors('password');
 });
 
+test('US2: registratie mislukt bij bestaand e-mailadres', function () {
+    $role = Role::where('name', 'player')->first();
+    User::factory()->create(['email' => 'bestaand@test.com', 'role_id' => $role?->id]);
+
+    $this->post(route('register.store'), [
+        'username'              => 'AnderNaam',
+        'email'                 => 'bestaand@test.com',
+        'password'              => 'password123',
+        'password_confirmation' => 'password123',
+    ])->assertSessionHasErrors('email');
+});
+
 // ─── US7: Toegangsbeveiliging ─────────────────────────────────────────────────
 
 test('US7: niet ingelogde gebruiker wordt omgeleid bij dashboard', function () {
@@ -52,6 +64,10 @@ test('US7: niet ingelogde gebruiker wordt omgeleid bij items', function () {
 
 test('US7: niet ingelogde gebruiker wordt omgeleid bij inventaris', function () {
     $this->get(route('inventory.index'))->assertRedirect(route('login'));
+});
+
+test('US7: niet ingelogde gebruiker wordt omgeleid bij ruilpost', function () {
+    $this->get(route('trades.index'))->assertRedirect(route('login'));
 });
 
 // ─── US8: Rollenbeheer ────────────────────────────────────────────────────────
@@ -91,6 +107,15 @@ test('US9: beheerder heeft wel toegang tot adminpaneel', function () {
     $this->actingAs($admin)
         ->get(route('admin.items.index'))
         ->assertOk();
+});
+
+test('US9: speler kan geen statistiekenpagina bekijken', function () {
+    $playerRole = Role::where('name', 'player')->first();
+    $player = User::factory()->create(['role_id' => $playerRole?->id]);
+
+    $this->actingAs($player)
+        ->get(route('admin.stats'))
+        ->assertForbidden();
 });
 
 // ─── US10: Itemoverzicht bekijken ─────────────────────────────────────────────
@@ -141,6 +166,16 @@ test('US11: detailpagina toont alle vereiste velden', function () {
 
 // ─── US15: Eigen inventory bekijken ──────────────────────────────────────────
 
+test('US15: lege inventaris toont lege staat', function () {
+    $playerRole = Role::where('name', 'player')->first();
+    $player = User::factory()->create(['role_id' => $playerRole?->id]);
+
+    $this->actingAs($player)
+        ->get(route('inventory.index'))
+        ->assertOk()
+        ->assertSee('leeg');
+});
+
 test('US15: speler ziet alleen eigen items in inventaris', function () {
     $playerRole = Role::where('name', 'player')->first();
     $speler1 = User::factory()->create(['role_id' => $playerRole?->id]);
@@ -178,6 +213,23 @@ test('US23: beheerder kan nieuw account aanmaken met rol', function () {
 
     expect(User::where('email', 'nieuwspeler@test.com')->exists())->toBeTrue();
     expect(User::where('email', 'nieuwspeler@test.com')->first()->role->name)->toBe('player');
+});
+
+test('US23: aanmaken mislukt bij bestaand e-mailadres', function () {
+    $adminRole  = Role::where('name', 'admin')->first();
+    $playerRole = Role::where('name', 'player')->first();
+    $admin  = User::factory()->create(['role_id' => $adminRole?->id]);
+    User::factory()->create(['email' => 'dubbel@test.com', 'role_id' => $playerRole?->id]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.users.store'), [
+            'username'              => 'AnderNaam',
+            'email'                 => 'dubbel@test.com',
+            'password'              => 'DreamScape!Test#2026',
+            'password_confirmation' => 'DreamScape!Test#2026',
+            'role_id'               => $playerRole->id,
+        ])
+        ->assertSessionHasErrors('email');
 });
 
 test('US23: speler heeft geen toegang tot gebruikersbeheer', function () {
@@ -244,6 +296,25 @@ test('US24: beheerder kan item verwijderen', function () {
         ->assertRedirect(route('admin.items.index'));
 
     expect(Item::find($item->id))->toBeNull();
+});
+
+test('US24: speler kan geen item aanmaken', function () {
+    $playerRole = Role::where('name', 'player')->first();
+    $player = User::factory()->create(['role_id' => $playerRole?->id]);
+
+    $this->actingAs($player)
+        ->post(route('admin.items.store'), [
+            'name'           => 'HackPoging',
+            'type'           => 'weapon',
+            'rarity'         => 'legendary',
+            'strength'       => 100,
+            'speed'          => 100,
+            'durability'     => 100,
+            'required_level' => 1,
+        ])
+        ->assertForbidden();
+
+    expect(Item::where('name', 'HackPoging')->exists())->toBeFalse();
 });
 
 test('US24: statistieken worden gevalideerd op 0-100', function () {

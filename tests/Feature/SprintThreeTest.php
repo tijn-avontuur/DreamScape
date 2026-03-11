@@ -265,3 +265,74 @@ test('US22: dashboard toont notificaties voor ingelogde gebruiker', function () 
         ->assertOk()
         ->assertSee('TestMelding: ruilverzoek ontvangen.');
 });
+
+// ─── US25: Items toekennen & statistieken ─────────────────────────────────────
+
+function makeAdmin(): User
+{
+    $role = Role::where('name', 'admin')->first();
+    return User::factory()->create(['role_id' => $role?->id]);
+}
+
+test('US25: admin kan item toekennen aan speler', function () {
+    $admin  = makeAdmin();
+    $player = makePlayer();
+    $item   = Item::factory()->create();
+
+    $this->actingAs($admin)
+        ->post(route('admin.items.assign', $item), ['user_id' => $player->id])
+        ->assertRedirect(route('admin.items.index'));
+
+    expect(Inventory::where('user_id', $player->id)->where('item_id', $item->id)->exists())->toBeTrue();
+});
+
+test('US25: niet-admin kan geen item toekennen', function () {
+    $player = makePlayer();
+    $item   = Item::factory()->create();
+
+    $this->actingAs($player)
+        ->post(route('admin.items.assign', $item), ['user_id' => $player->id])
+        ->assertForbidden();
+});
+
+test('US25: toekenformulier is bereikbaar voor admin', function () {
+    $admin = makeAdmin();
+    $item  = Item::factory()->create();
+
+    $this->actingAs($admin)
+        ->get(route('admin.items.assign.show', $item))
+        ->assertOk();
+});
+
+test('US25: statistiekenpagina toont aantal bezitters per item', function () {
+    $admin   = makeAdmin();
+    $player1 = makePlayer();
+    $player2 = makePlayer();
+    $item    = Item::factory()->create();
+
+    giveItem($player1, $item);
+    giveItem($player2, $item);
+
+    $this->actingAs($admin)
+        ->get(route('admin.stats'))
+        ->assertOk()
+        ->assertSee($item->name)
+        ->assertSee('2');
+});
+
+test('US25: statistieken kloppen met database', function () {
+    $admin  = makeAdmin();
+    $player = makePlayer();
+    $item   = Item::factory()->create();
+
+    giveItem($player, $item);
+
+    $count = Inventory::where('item_id', $item->id)->count();
+    expect($count)->toBe(1);
+
+    $this->actingAs($admin)
+        ->post(route('admin.items.assign', $item), ['user_id' => $player->id]);
+
+    $updatedQuantity = Inventory::where('user_id', $player->id)->where('item_id', $item->id)->value('quantity');
+    expect($updatedQuantity)->toBe(2);
+});
